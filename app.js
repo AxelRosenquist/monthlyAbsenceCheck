@@ -1,10 +1,12 @@
-function main() {
-  const sender = "email@adress.com";
+import { EMAIL } from "./mail";
+
+function monthlyAbsenceCheck() {
+  const sender = EMAIL;
   const threads = GmailApp.search("from:" + sender);
   let allAbsences = [];
 
 
-for (let i = 0; i < threads.length; i++) {
+  for (let i = 0; i < threads.length; i++) {
     const messages = threads[i].getMessages();
     for (let j = 0; j < messages.length; j++) {
       const message = messages[j];
