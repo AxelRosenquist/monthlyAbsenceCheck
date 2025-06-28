@@ -75,7 +75,7 @@ function sortByClass(absences){
 
     absences.forEach(function(obj) {
       if (!/[4-9]/.test(obj.year[0])) {
-        newAbsence.push(obj)
+        newAbsence.push(obj);
       }
     });
   return newAbsence;
