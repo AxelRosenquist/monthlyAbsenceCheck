@@ -15,7 +15,7 @@ function monthlyAbsenceCheck() {
   }
   allAbsences = sortByClass(allAbsences);
 
-  // allAbsences.forEach(absence => Logger.log(absence));
+  allAbsences.forEach(absence => Logger.log(absence));
 
   const d = new Date();
   const month = d.getMonth();
@@ -60,6 +60,7 @@ function getAbsence(message){
 }
 
 function sortByClass(absences){
+  let newAbsence = [];
   absences.sort((a, b) => {
     const isALetter = /^[A-Za-z]/.test(a.year);
     const isBLetter = /^[A-Za-z]/.test(b.year);
@@ -71,7 +72,13 @@ function sortByClass(absences){
     if (a.year > b.year) return 1;
     return 0;
     });
-  return absences;
+
+    absences.forEach(function(obj) {
+      if (!/[4-9]/.test(obj.year[0])) {
+        newAbsence.push(obj)
+      }
+    });
+  return newAbsence;
 }
 
 function getCurrentSchoolYear(monthInt, yearInt){
@@ -87,9 +94,8 @@ function createSheet(fileName, months){
   const spreadsheet = SpreadsheetApp.create(fileName);
   spreadsheet.renameActiveSheet('Sammanställning');
   sheetOrder.forEach(function(i) {
-    Logger.log(i)
     let month = months[i];
     spreadsheet.insertSheet(month);
-    Logger.log('Created sheet for: ' + month);
+    //Logger.log('Created sheet for: ' + month);
     });
 }
