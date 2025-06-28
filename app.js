@@ -4,7 +4,7 @@ function main() {
   let allAbsences = [];
 
 
-  for (let i = 0; i < threads.length; i++) {
+for (let i = 0; i < threads.length; i++) {
     const messages = threads[i].getMessages();
     for (let j = 0; j < messages.length; j++) {
       const message = messages[j];
@@ -23,21 +23,17 @@ function main() {
   const fileName = 'Frånvaro-' + schoolYear;
   const currentMonth = months[month];
   const files = DriveApp.getFilesByName(fileName);
-  let sheet;
+  let spreadsheet;
 
   Logger.log(fileName)
 
   if (files.hasNext()){
     const file = files.next();
-    sheet = SpreadsheetApp.open(file);
+    spreadsheet = SpreadsheetApp.open(file);
     Logger.log('File found');
   } else {
-    sheet = SpreadsheetApp.create(fileName);
+    createSheet(fileName, months);
     Logger.log('File created');
-    // Create document
-    for (var key in months){
-      // Logger.log(months[key]);
-    }
   }
   // Do operations in document
 }
@@ -82,4 +78,16 @@ function getCurrentSchoolYear(monthInt, yearInt){
   }else{
     return ((yearInt - 1) + '/' + yearInt);
   }
+}
+
+function createSheet(fileName, months){
+  const sheetOrder = [7,8,9,10,11,0,1,2,3,4,5];
+  const spreadsheet = SpreadsheetApp.create(fileName);
+  spreadsheet.renameActiveSheet('Sammanställning');
+  sheetOrder.forEach(function(i) {
+    Logger.log(i)
+    let month = months[i];
+    spreadsheet.insertSheet(month);
+    Logger.log('Created sheet for: ' + month);
+    });
 }
