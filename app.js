@@ -1,20 +1,24 @@
 import { EMAIL } from "./mail";
 
+const CONFIG = {
+  emailSender: EMAIL,
+  months: {7:'Aug',8:'Sep',9:'Okt',10:'Nov',11:'Dec',0:'Jan',1:'Feb',2:'Mar',3:'Apr',4:'Maj',5:'Jun',},
+  scaleRange: 'A2:E3',
+  sheetOrder: [7,8,9,10,11,0,1,2,3,4,5],
+}
+
+
+// Main function
 function monthlyAbsenceCheck() {
-  const sender = EMAIL;
-  const threads = GmailApp.search("from:" + sender);
-  let allAbsences = [];
-
-
-  const todaysMails = getTodaysMail(sender);
+  const todaysMails = getTodaysMail(CONFIG.emailSender);
 
   todaysMails.forEach(function(mail){
-    allAbsences = getAbsence(mail);
-    allAbsences = sortByClass(allAbsences);
+    const allAbsences = getAbsence(mail);
+    const allSortedAbsences = sortByClass(allAbsences);
 
-    allAbsences.forEach(absence => Logger.log(absence));
+    allSortedAbsences.forEach(absence => Logger.log(absence));
 
-    let school = allAbsences[0].year[0];
+    let school = allSortedAbsences[0].year[0];
     if (school == "y" || school == "Y") {
       school = "Ydre";
     } else {
@@ -24,22 +28,18 @@ function monthlyAbsenceCheck() {
     const d = new Date();
     const month = d.getMonth();
     const year = d.getFullYear();
-    const months = {7:'Aug',8:'Sep',9:'Okt',10:'Nov',11:'Dec',0:'Jan',1:'Feb',2:'Mar',3:'Apr',4:'Maj',5:'Jun',};
     const schoolYear = getCurrentSchoolYear(month, year);
     const fileName = 'Frånvaro-' + school + '-' + schoolYear;
-    const currentMonth = months[month];
+    const currentMonth = CONFIG.months[month];
     const files = DriveApp.getFilesByName(fileName);
     let spreadsheet;
-
-
-    Logger.log(fileName)
 
     if (files.hasNext()){
       const file = files.next();
       spreadsheet = SpreadsheetApp.open(file);
       Logger.log('File found');
     } else {
-      createSheet(fileName, months);
+      createSheet(fileName);
       Logger.log('File created');
     }
   
@@ -66,8 +66,6 @@ function getTodaysMail(sender){
 }
 
 
-
-
 function getAbsence(message){
   const content = message.getPlainBody();
   const lines = content.split('\n');
@@ -86,6 +84,7 @@ function getAbsence(message){
   }
   return results;
 }
+
 
 function sortByClass(absences){
   let newAbsence = [];
@@ -109,6 +108,7 @@ function sortByClass(absences){
   return newAbsence;
 }
 
+
 function getCurrentSchoolYear(monthInt, yearInt){
   if (monthInt >= 7) {
     return (yearInt + '/' + (yearInt + 1));
@@ -117,16 +117,15 @@ function getCurrentSchoolYear(monthInt, yearInt){
   }
 }
 
-function createSheet(fileName, months){
-  const sheetOrder = [7,8,9,10,11,0,1,2,3,4,5];
+
+function createSheet(fileName){
   const spreadsheet = SpreadsheetApp.create(fileName);
   spreadsheet.renameActiveSheet('Sammanställning');
-  sheetOrder.forEach(function(i) {
-    let month = months[i];
+  CONFIG.sheetOrder.forEach(function(i) {
+    let month = CONFIG.months[i];
     spreadsheet.insertSheet(month);
-    //Logger.log('Created sheet for: ' + month);
-    });
+  });
     let sheet = spreadsheet.getActiveSheet();
-    let range = sheet.getRange('A2:E3');
+    let range = sheet.getRange(CONFIG.scaleRange);
     Logger.log(typeof(range));
 }
