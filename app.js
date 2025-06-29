@@ -6,47 +6,45 @@ function monthlyAbsenceCheck() {
   let allAbsences = [];
 
 
-  const todaysMail = getTodaysMail(sender)
-  for (let i = 0; i < threads.length; i++) {
-    const messages = threads[i].getMessages();
-    for (let j = 0; j < messages.length; j++) {
-      const message = messages[j];
-      allAbsences = getAbsence(message);
+  const todaysMails = getTodaysMail(sender);
+
+  todaysMails.forEach(function(mail){
+    allAbsences = getAbsence(mail);
+    allAbsences = sortByClass(allAbsences);
+
+    allAbsences.forEach(absence => Logger.log(absence));
+
+    let school = allAbsences[0].year[0];
+    if (school == "y" || school == "Y") {
+      school = "Ydre";
+    } else {
+      school = "Hestra";
     }
-  }
-
-  allAbsences = sortByClass(allAbsences);
-  allAbsences.forEach(absence => Logger.log(absence));
-  if (allAbsences[0].year[0] === "y" || allAbsences[0].year[0] == "Y") {
-    school = "Ydre";
     
-  } else {
-    school = "Hestra";
-  }
-
-  const d = new Date();
-  const month = d.getMonth();
-  const year = d.getFullYear();
-  const months = {7:'Aug',8:'Sep',9:'Okt',10:'Nov',11:'Dec',0:'Jan',1:'Feb',2:'Mar',3:'Apr',4:'Maj',5:'Jun',};
-  const schoolYear = getCurrentSchoolYear(month, year);
-  const fileName = 'Frånvaro-' +  '-' + schoolYear;
-  const currentMonth = months[month];
-  const files = DriveApp.getFilesByName(fileName);
-  let spreadsheet;
+    const d = new Date();
+    const month = d.getMonth();
+    const year = d.getFullYear();
+    const months = {7:'Aug',8:'Sep',9:'Okt',10:'Nov',11:'Dec',0:'Jan',1:'Feb',2:'Mar',3:'Apr',4:'Maj',5:'Jun',};
+    const schoolYear = getCurrentSchoolYear(month, year);
+    const fileName = 'Frånvaro-' + school + '-' + schoolYear;
+    const currentMonth = months[month];
+    const files = DriveApp.getFilesByName(fileName);
+    let spreadsheet;
 
 
-  Logger.log(fileName)
+    Logger.log(fileName)
 
-  if (files.hasNext()){
-    const file = files.next();
-    spreadsheet = SpreadsheetApp.open(file);
-    Logger.log('File found');
-  } else {
-    createSheet(fileName, months);
-    Logger.log('File created');
-  }
+    if (files.hasNext()){
+      const file = files.next();
+      spreadsheet = SpreadsheetApp.open(file);
+      Logger.log('File found');
+    } else {
+      createSheet(fileName, months);
+      Logger.log('File created');
+    }
   
-  // Do operations in document
+    // Do operations in document
+  });
 }
 
 
@@ -130,6 +128,5 @@ function createSheet(fileName, months){
     });
     let sheet = spreadsheet.getActiveSheet();
     let range = sheet.getRange('A2:E3');
-    let cells = range.
     Logger.log(typeof(range));
 }
