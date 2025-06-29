@@ -6,6 +6,7 @@ function monthlyAbsenceCheck() {
   let allAbsences = [];
 
 
+  const todaysMail = getTodaysMail(sender)
   for (let i = 0; i < threads.length; i++) {
     const messages = threads[i].getMessages();
     for (let j = 0; j < messages.length; j++) {
@@ -13,19 +14,26 @@ function monthlyAbsenceCheck() {
       allAbsences = getAbsence(message);
     }
   }
-  allAbsences = sortByClass(allAbsences);
 
+  allAbsences = sortByClass(allAbsences);
   allAbsences.forEach(absence => Logger.log(absence));
+  if (allAbsences[0].year[0] === "y" || allAbsences[0].year[0] == "Y") {
+    school = "Ydre";
+    
+  } else {
+    school = "Hestra";
+  }
 
   const d = new Date();
   const month = d.getMonth();
   const year = d.getFullYear();
   const months = {7:'Aug',8:'Sep',9:'Okt',10:'Nov',11:'Dec',0:'Jan',1:'Feb',2:'Mar',3:'Apr',4:'Maj',5:'Jun',};
   const schoolYear = getCurrentSchoolYear(month, year);
-  const fileName = 'Frånvaro-' + schoolYear;
+  const fileName = 'Frånvaro-' +  '-' + schoolYear;
   const currentMonth = months[month];
   const files = DriveApp.getFilesByName(fileName);
   let spreadsheet;
+
 
   Logger.log(fileName)
 
@@ -37,8 +45,30 @@ function monthlyAbsenceCheck() {
     createSheet(fileName, months);
     Logger.log('File created');
   }
+  
   // Do operations in document
 }
+
+
+function getTodaysMail(sender){
+  let todaysMail = [];
+  const d = new Date();
+  let todaysDate = d.toString().split(' ').slice(0,3).join(' ');
+  const threads = GmailApp.search("from:" + sender);
+  threads.forEach(function(thread){
+    const mailDate = thread.getMessages()[0].getDate().toString().split(' ').slice(0,3).join(' ');
+    if (mailDate === todaysDate){
+      todaysMail.push(thread);
+    };
+  }); 
+  for (let i = 0; i < todaysMail.length; i++){
+    todaysMail[i] = todaysMail[i].getMessages()[0];
+  }
+  return todaysMail;
+}
+
+
+
 
 function getAbsence(message){
   const content = message.getPlainBody();
@@ -74,7 +104,7 @@ function sortByClass(absences){
     });
 
     absences.forEach(function(obj) {
-      if (!/[4-9]/.test(obj.year[0])) {
+      if (!/[4-9]/.test(obj.year[1])) {
         newAbsence.push(obj);
       }
     });
@@ -98,4 +128,8 @@ function createSheet(fileName, months){
     spreadsheet.insertSheet(month);
     //Logger.log('Created sheet for: ' + month);
     });
+    let sheet = spreadsheet.getActiveSheet();
+    let range = sheet.getRange('A2:E3');
+    let cells = range.
+    Logger.log(typeof(range));
 }
