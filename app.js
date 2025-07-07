@@ -5,8 +5,8 @@ const CONFIG = {
   months: {7:'Aug',8:'Sep',9:'Okt',10:'Nov',11:'Dec',0:'Jan',1:'Feb',2:'Mar',3:'Apr',4:'Maj',5:'Jun',},
   sheetOrder: [7,8,9,10,11,0,1,2,3,4,5],
   scaleRange: 'A2:E3',
-  startColumn: 'A5',
   absenceColors: {1:'#a4c2f4',2:'#3c78d8',3:'#b6d7a8',4:'#6aa84f',5:'#fff2cc',6:'#ffff00',7:'#f6b26b',8:'#ff9900',9:'#ff0000',10:'#990000'},
+
 }
 
 
@@ -17,9 +17,7 @@ function monthlyAbsenceCheck() {
   todaysMails.forEach(function(mail){
     const allAbsences = getAbsence(mail);
     const allSortedAbsences = sortByClass(allAbsences);
-
-    allSortedAbsences.forEach(absence => Logger.log(absence));
-
+    
     let school = allSortedAbsences[0].year[0];
     if (school == "y" || school == "Y") {
       school = "Ydre";
@@ -45,7 +43,10 @@ function monthlyAbsenceCheck() {
       spreadsheet = SpreadsheetApp.open(file);
       Logger.log('File found');
     }
-  
+    if (CONFIG.sheetOrder.includes(month + 1)){
+      createMonthsTable(month + 1, spreadsheet, allSortedAbsences);
+    }
+    
     // Do operations in document
   });
 }
@@ -75,6 +76,7 @@ function getAbsence(message){
   const results = [];
 
   for (let line of lines) {
+
     const values = line.split(',').map(v => v.trim(' '));
     if (values.length === 3){
       const [name, year, absence] = values;
@@ -135,10 +137,25 @@ function createSheet(fileName){
     .setBorder(true, true, true, true, true, true)
     .setHorizontalAlignment("center")
     .setBackgrounds(absenceScaleColors);
+
+  for (let col = 1; col <= 15; col++) {
+    sheet.setColumnWidth(col, 150);
+  }
   
   CONFIG.sheetOrder.forEach(function(i) {
     let month = CONFIG.months[i];
     spreadsheet.insertSheet(month);
   });
   return spreadsheet
+}
+
+function createMonthsTable(month, spreadsheet, absences){
+  let data = absences.map(person => [person.name, person.year, person.absence]);
+  let sheet = spreadsheet.getSheetByName(CONFIG.months[month]);
+  const startRow = 5;
+  const startCol = 1;
+  sheet.getRange(startRow, startCol, data.length, data[0].length).setValues(data);
+  for (let col = 1; col <= 15; col++) {
+    sheet.setColumnWidth(col, 150);
+  }
 }
