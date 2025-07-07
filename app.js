@@ -3,8 +3,10 @@ import { EMAIL } from "./mail";
 const CONFIG = {
   emailSender: EMAIL,
   months: {7:'Aug',8:'Sep',9:'Okt',10:'Nov',11:'Dec',0:'Jan',1:'Feb',2:'Mar',3:'Apr',4:'Maj',5:'Jun',},
-  scaleRange: 'A2:E3',
   sheetOrder: [7,8,9,10,11,0,1,2,3,4,5],
+  scaleRange: 'A2:E3',
+  startColumn: 'A5',
+  absenceColors: {1:'#a4c2f4',2:'#3c78d8',3:'#b6d7a8',4:'#6aa84f',5:'#fff2cc',6:'#ffff00',7:'#f6b26b',8:'#ff9900',9:'#ff0000',10:'#990000'},
 }
 
 
@@ -29,6 +31,7 @@ function monthlyAbsenceCheck() {
     const month = d.getMonth();
     const year = d.getFullYear();
     const schoolYear = getCurrentSchoolYear(month, year);
+
     const fileName = 'Frånvaro-' + school + '-' + schoolYear;
     const currentMonth = CONFIG.months[month];
     const files = DriveApp.getFilesByName(fileName);
@@ -40,7 +43,7 @@ function monthlyAbsenceCheck() {
       Logger.log('File found');
     } else {
       createSheet(fileName);
-      Logger.log('File created');
+      Logger.log('File created for instance ' + school);
     }
   
     // Do operations in document
@@ -121,11 +124,21 @@ function getCurrentSchoolYear(monthInt, yearInt){
 function createSheet(fileName){
   const spreadsheet = SpreadsheetApp.create(fileName);
   spreadsheet.renameActiveSheet('Sammanställning');
+  let sheet = spreadsheet.getActiveSheet();
+  let range = sheet.getRange(CONFIG.scaleRange);
+  const absenceScaleColors = [[CONFIG.absenceColors[1],CONFIG.absenceColors[2],CONFIG.absenceColors[3],CONFIG.absenceColors[4],CONFIG.absenceColors[5]],
+                              [CONFIG.absenceColors[6],CONFIG.absenceColors[7],CONFIG.absenceColors[8],CONFIG.absenceColors[9],CONFIG.absenceColors[10]]];
+  const absenceScale = [[1,2,3,4,5],
+                        [6,7,8,9,'+10']];
+  range.setValues(absenceScale)
+    .setFontWeight("bold") 
+    .setBorder(true, true, true, true, true, true)
+    .setHorizontalAlignment("center")
+    .setBackgrounds(absenceScaleColors);
+  
+
   CONFIG.sheetOrder.forEach(function(i) {
     let month = CONFIG.months[i];
     spreadsheet.insertSheet(month);
   });
-    let sheet = spreadsheet.getActiveSheet();
-    let range = sheet.getRange(CONFIG.scaleRange);
-    Logger.log(typeof(range));
 }
