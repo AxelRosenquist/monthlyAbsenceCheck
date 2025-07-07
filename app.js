@@ -37,13 +37,13 @@ function monthlyAbsenceCheck() {
     const files = DriveApp.getFilesByName(fileName);
     let spreadsheet;
 
-    if (files.hasNext()){
+    if (!files.hasNext()){
+      spreadsheet = createSheet(fileName);
+      Logger.log('File created for instance ' + school);
+    } else {
       const file = files.next();
       spreadsheet = SpreadsheetApp.open(file);
       Logger.log('File found');
-    } else {
-      createSheet(fileName);
-      Logger.log('File created for instance ' + school);
     }
   
     // Do operations in document
@@ -136,9 +136,9 @@ function createSheet(fileName){
     .setHorizontalAlignment("center")
     .setBackgrounds(absenceScaleColors);
   
-
   CONFIG.sheetOrder.forEach(function(i) {
     let month = CONFIG.months[i];
     spreadsheet.insertSheet(month);
   });
+  return spreadsheet
 }
