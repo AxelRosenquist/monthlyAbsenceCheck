@@ -13,10 +13,12 @@ const CONFIG = {
 // Main function
 function monthlyAbsenceCheck() {
   const todaysMails = getTodaysMail(CONFIG.emailSender);
+  getTotalAbsence
 
   todaysMails.forEach(function(mail){
     const allAbsences = getAbsence(mail);
     const allSortedAbsences = sortByClass(allAbsences);
+    let totalAbsence = getTotalAbsence(allSortedAbsences);
     
     let school = allSortedAbsences[0].year[0];
     if (school == "y" || school == "Y") {
@@ -158,4 +160,19 @@ function createMonthsTable(month, spreadsheet, absences){
   for (let col = 1; col <= 15; col++) {
     sheet.setColumnWidth(col, 150);
   }
+}
+
+function getTotalAbsence(sortedAbsences){
+    tempDic = {'Test User': 3};
+    sortedAbsences.forEach(function(pupil){
+      if (pupil.name in tempDic){
+        Logger.log(pupil.name + ' is in dict');
+        tempDic[pupil.name] = tempDic[pupil.name] + 1;
+
+       } else {
+        Logger.log(pupil.name + ' is not in dict');
+        tempDic[pupil.name] = 1;
+       };
+    });
+    Logger.log(tempDic);
 }
