@@ -6,20 +6,23 @@ const CONFIG = {
   sheetOrder: [7,8,9,10,11,0,1,2,3,4,5],
   scaleRange: 'A2:E3',
   absenceColors: {1:'#a4c2f4',2:'#3c78d8',3:'#b6d7a8',4:'#6aa84f',5:'#fff2cc',6:'#ffff00',7:'#f6b26b',8:'#ff9900',9:'#ff0000',10:'#990000'},
-
+  absenceTotalCell: 'V1',
 }
 
 
 // Main function
 function monthlyAbsenceCheck() {
   const todaysMails = getTodaysMail(CONFIG.emailSender);
-  getTotalAbsence
 
   todaysMails.forEach(function(mail){
     const allAbsences = getAbsence(mail);
     const allSortedAbsences = sortByClass(allAbsences);
-    let totalAbsence = getTotalAbsence(allSortedAbsences);
+    const previousTotalAbsence = {}; // Need to make a function to both get and set this value in the absencetotalCell cell in the spreadsheeet
     
+    let totalAbsence = getTotalAbsence(allSortedAbsences, previousTotalAbsence);
+    
+    Logger.log(totalAbsence)
+
     let school = allSortedAbsences[0].year[0];
     if (school == "y" || school == "Y") {
       school = "Ydre";
@@ -162,17 +165,13 @@ function createMonthsTable(month, spreadsheet, absences){
   }
 }
 
-function getTotalAbsence(sortedAbsences){
-    tempDic = {'Test User': 3};
+function getTotalAbsence(sortedAbsences, totalAbsence){
     sortedAbsences.forEach(function(pupil){
-      if (pupil.name in tempDic){
-        Logger.log(pupil.name + ' is in dict');
-        tempDic[pupil.name] = tempDic[pupil.name] + 1;
-
+      if (pupil.name in totalAbsence){
+        totalAbsence[pupil.name] = totalAbsence[pupil.name] + 1;
        } else {
-        Logger.log(pupil.name + ' is not in dict');
-        tempDic[pupil.name] = 1;
+        totalAbsence[pupil.name] = 1;
        };
     });
-    Logger.log(tempDic);
+    return totalAbsence;
 }
