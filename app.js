@@ -10,19 +10,17 @@ const CONFIG = {
 }
 
 
-// Main function
 function monthlyAbsenceCheck() {
   const todaysMails = getTodaysMail(CONFIG.emailSender);
 
   todaysMails.forEach(function(mail){
     const allAbsences = getAbsence(mail);
     const allSortedAbsences = sortByClass(allAbsences);
+    const allSortedFilteredAbsences = allSortedAbsences.filter(entry => entry.absence >= 15.0);
     const previousTotalAbsence = {}; // Need to make a function to both get and set this value in the absencetotalCell cell in the spreadsheeet
     
     let totalAbsence = getTotalAbsence(allSortedAbsences, previousTotalAbsence);
     
-    Logger.log(totalAbsence)
-
     let school = allSortedAbsences[0].year[0];
     if (school == "y" || school == "Y") {
       school = "Ydre";
@@ -154,6 +152,7 @@ function createSheet(fileName){
   return spreadsheet
 }
 
+
 function createMonthsTable(month, spreadsheet, absences){
   let data = absences.map(person => [person.name, person.year, person.absence]);
   let sheet = spreadsheet.getSheetByName(CONFIG.months[month]);
@@ -165,6 +164,7 @@ function createMonthsTable(month, spreadsheet, absences){
   }
 }
 
+
 function getTotalAbsence(sortedAbsences, totalAbsence){
     sortedAbsences.forEach(function(pupil){
       if (pupil.name in totalAbsence){
@@ -175,3 +175,4 @@ function getTotalAbsence(sortedAbsences, totalAbsence){
     });
     return totalAbsence;
 }
+
