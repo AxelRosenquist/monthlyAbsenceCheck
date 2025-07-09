@@ -13,7 +13,7 @@ const CONFIG = {
 function monthlyAbsenceCheck() {
   const todaysMails = getTodaysMail(CONFIG.emailSender);
 
-  todaysMails.forEach(function(mail){
+  todaysMails.forEach(mail => {
     const allAbsences = getAbsence(mail);
     const allSortedAbsences = sortByClass(allAbsences);
     const allSortedFilteredAbsences = allSortedAbsences.filter(entry => entry.absence >= 15.0);
@@ -56,21 +56,13 @@ function monthlyAbsenceCheck() {
 }
 
 
-function getTodaysMail(sender){
-  let todaysMail = [];
-  const d = new Date();
-  let todaysDate = d.toString().split(' ').slice(0,3).join(' ');
+function getTodaysMail(sender) {
+  const today = new Date().toDateString();
   const threads = GmailApp.search("from:" + sender);
-  threads.forEach(function(thread){
-    const mailDate = thread.getMessages()[0].getDate().toString().split(' ').slice(0,3).join(' ');
-    if (mailDate === todaysDate){
-      todaysMail.push(thread);
-    };
-  }); 
-  for (let i = 0; i < todaysMail.length; i++){
-    todaysMail[i] = todaysMail[i].getMessages()[0];
-  }
-  return todaysMail;
+  
+  return threads
+    .map(t => t.getMessages()[0])
+    .filter(m => m.getDate().toDateString() === today);
 }
 
 
@@ -81,7 +73,7 @@ function getAbsence(message){
 
   for (let line of lines) {
 
-    const values = line.split(',').map(v => v.trim(' '));
+    const values = line.split(',').map(v => v.trim());
     if (values.length === 3){
       const [name, year, absence] = values;
       results.push({
@@ -109,7 +101,7 @@ function sortByClass(absences){
     return 0;
     });
 
-    absences.forEach(function(obj) {
+    absences.forEach(obj => {
       if (!/[4-9]/.test(obj.year[1])) {
         newAbsence.push(obj);
       }
@@ -121,6 +113,7 @@ function sortByClass(absences){
 function getPreviousTotal(spreadsheet){
   let sheet = spreadsheet.getSheetByName('Sammanställning');
   const rawPreviousTotal = sheet.getRange(CONFIG.absenceTotalCell).getValue();
+  if (!rawPreviousTotal) return {};
   const cleanedPreviousTotal = rawPreviousTotal.replace(/[{}]/g, "");
   const listPreviousTotal = cleanedPreviousTotal.split(', ');
   let previousTotal = {};
@@ -161,7 +154,7 @@ function createSheet(fileName){
     sheet.setColumnWidth(col, 150);
   }
   
-  CONFIG.sheetOrder.forEach(function(i) {
+  CONFIG.sheetOrder.forEach(i => {
     let month = CONFIG.months[i];
     spreadsheet.insertSheet(month);
   });
@@ -182,7 +175,7 @@ function createMonthsTable(month, spreadsheet, absences){
 
 
 function getTotalAbsence(sortedAbsences, totalAbsence){
-    sortedAbsences.forEach(function(pupil){
+    sortedAbsences.forEach(pupil =>{
       if (pupil.name in totalAbsence){
         totalAbsence[pupil.name] = totalAbsence[pupil.name] + 1;
        } else {
@@ -194,9 +187,6 @@ function getTotalAbsence(sortedAbsences, totalAbsence){
 
 
 function setTotalAbsence(totalAbsence, spreadsheet){
-  Logger.log(spreadsheet);
   let sheet = spreadsheet.getSheetByName('Sammanställning');
-  Logger.log(sheet);
-
   sheet.getRange(CONFIG.absenceTotalCell).setValue(totalAbsence);
 }
