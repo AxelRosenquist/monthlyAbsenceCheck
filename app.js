@@ -2,8 +2,8 @@ import { EMAIL } from "./mail";
 
 const CONFIG = {
   emailSender: EMAIL,
-  months: {7:'Aug',8:'Sep',9:'Okt',10:'Nov',11:'Dec',0:'Jan',1:'Feb',2:'Mar',3:'Apr',4:'Maj',5:'Jun',},
-  sheetOrder: [7,8,9,10,11,0,1,2,3,4,5],
+  months: {8:'Aug', 9:'Sep', 10:'Okt', 11:'Nov', 0:'Dec', 1:'Jan', 2:'Feb', 3:'Mar', 4:'Apr', 5:'Maj', 6:'Jun',},
+  sheetOrder: [8,9,10,11,0,1,2,3,4,6],
   scaleRange: 'A2:E3',
   absenceColors: {1:'#a4c2f4',2:'#3c78d8',3:'#b6d7a8',4:'#6aa84f',5:'#fff2cc',6:'#ffff00',7:'#f6b26b',8:'#ff9900',9:'#ff0000',10:'#990000'},
   absenceTotalCell: 'V1',
@@ -43,8 +43,9 @@ function monthlyAbsenceCheck() {
       spreadsheet = SpreadsheetApp.open(file);
       Logger.log('File found');
     }
-    if (CONFIG.sheetOrder.includes(month + 1)){
-      createMonthsTable(month + 1, spreadsheet, allSortedFilteredAbsences);
+    let testMonth = month + 2
+    if (CONFIG.sheetOrder.includes(testMonth)){
+      createMonthsTable(testMonth, spreadsheet, allSortedFilteredAbsences);
     }
 
     const previousTotalAbsence = getPreviousTotal(spreadsheet);
@@ -128,12 +129,12 @@ function getPreviousTotal(spreadsheet){
     const [key, value] = pair.split('=');
     previousTotal[key] = parseFloat(value);  
   });
-  return previousTotal;
+    return previousTotal;
 }
 
 
 function getCurrentSchoolYear(monthInt, yearInt){
-  if (monthInt >= 7) {
+  if (monthInt > 7) {
     return (yearInt + '/' + (yearInt + 1));
   }else{
     return ((yearInt - 1) + '/' + yearInt);
@@ -164,7 +165,7 @@ function createSheet(fileName){
     let month = CONFIG.months[i];
     spreadsheet.insertSheet(month);
   });
-  return spreadsheet
+  return spreadsheet;
 }
 
 
