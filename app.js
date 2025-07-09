@@ -43,15 +43,15 @@ function monthlyAbsenceCheck() {
       spreadsheet = SpreadsheetApp.open(file);
       Logger.log('File found');
     }
-    let testMonth = month + 2
-    if (CONFIG.sheetOrder.includes(testMonth)){
-      createMonthsTable(testMonth, spreadsheet, highAbsenceStudents);
-    }
-
     const previousTotalAbsence = getPreviousTotal(spreadsheet);
     let totalAbsence = getTotalAbsence(highAbsenceStudents, previousTotalAbsence);
 
     setTotalAbsence(totalAbsence ,spreadsheet);
+
+    let testMonth = month + 2
+    if (CONFIG.sheetOrder.includes(testMonth)){
+      createMonthsTable(testMonth, spreadsheet, highAbsenceStudents, totalAbsence);
+    }
   });
 }
 
@@ -144,32 +144,55 @@ function createSheet(fileName){
                               [CONFIG.absenceColors[6],CONFIG.absenceColors[7],CONFIG.absenceColors[8],CONFIG.absenceColors[9],CONFIG.absenceColors[10]]];
   const absenceScale = [[1,2,3,4,5],
                         [6,7,8,9,'+10']];
+
   range.setValues(absenceScale)
-    .setFontWeight("bold") 
-    .setBorder(true, true, true, true, true, true)
-    .setHorizontalAlignment("center")
-    .setBackgrounds(absenceScaleColors);
+      .setFontWeight("bold") 
+      .setBorder(true, true, true, true, true, true)
+      .setHorizontalAlignment("center")
+      .setBackgrounds(absenceScaleColors);
 
   for (let col = 1; col <= 15; col++) {
-    sheet.setColumnWidth(col, 150);
-  }
-  
+      sheet.setColumnWidth(col, 150);
+    }
+
   CONFIG.sheetOrder.forEach(i => {
+
     let month = CONFIG.months[i];
     spreadsheet.insertSheet(month);
+    sheet = spreadsheet.getSheetByName(month);
+    range = sheet.getRange(CONFIG.scaleRange);
+    range.setValues(absenceScale)
+      .setFontWeight("bold") 
+      .setBorder(true, true, true, true, true, true)
+      .setHorizontalAlignment("center")
+      .setBackgrounds(absenceScaleColors);
+
+    for (let col = 1; col <= 15; col++) {
+      sheet.setColumnWidth(col, 150);
+    }
   });
   return spreadsheet;
 }
 
 
-function createMonthsTable(month, spreadsheet, absences){
+function createMonthsTable(month, spreadsheet, absences, totalAbsence){
   let data = absences.map(person => [person.name, person.year, person.absence]);
   let sheet = spreadsheet.getSheetByName(CONFIG.months[month]);
-  const startRow = 5;
+  let row = 8;
   const startCol = 1;
-  sheet.getRange(startRow, startCol, data.length, data[0].length).setValues(data);
+
+  sheet.getRange(row, startCol, data.length, data[0].length).setValues(data);
   for (let col = 1; col <= 15; col++) {
     sheet.setColumnWidth(col, 150);
+  }
+
+  let cellValue = sheet.getRange("A" + row).getValue();
+
+  while (cellValue != ""){
+    Logger.log(cellValue);
+    sheet.getRange('A' + row + ':E' + row).setBackground(CONFIG.absenceColors[totalAbsence[cellValue]]);
+    row++;
+    cellValue = sheet.getRange("A" + row).getValue();
   }
 }
 
