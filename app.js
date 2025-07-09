@@ -17,9 +17,6 @@ function monthlyAbsenceCheck() {
     const allAbsences = getAbsence(mail);
     const allSortedAbsences = sortByClass(allAbsences);
     const allSortedFilteredAbsences = allSortedAbsences.filter(entry => entry.absence >= 15.0);
-    const previousTotalAbsence = {}; // Need to make a function to both get and set this value in the absencetotalCell cell in the spreadsheeet
-    
-    let totalAbsence = getTotalAbsence(allSortedAbsences, previousTotalAbsence);
     
     let school = allSortedAbsences[0].year[0];
     if (school == "y" || school == "Y") {
@@ -47,10 +44,13 @@ function monthlyAbsenceCheck() {
       Logger.log('File found');
     }
     if (CONFIG.sheetOrder.includes(month + 1)){
-      createMonthsTable(month + 1, spreadsheet, allSortedAbsences);
+      createMonthsTable(month + 1, spreadsheet, allSortedFilteredAbsences);
     }
-    
-    // Do operations in document
+
+    const previousTotalAbsence = getPreviousTotal(spreadsheet);
+    let totalAbsence = getTotalAbsence(allSortedFilteredAbsences, previousTotalAbsence);
+
+    setTotalAbsence(totalAbsence ,spreadsheet);
   });
 }
 
@@ -117,6 +117,21 @@ function sortByClass(absences){
 }
 
 
+function getPreviousTotal(spreadsheet){
+  let sheet = spreadsheet.getSheetByName('Sammanställning');
+  const rawPreviousTotal = sheet.getRange(CONFIG.absenceTotalCell).getValue();
+  const cleanedPreviousTotal = rawPreviousTotal.replace(/[{}]/g, "");
+  const listPreviousTotal = cleanedPreviousTotal.split(', ');
+  let previousTotal = {};
+
+  listPreviousTotal.forEach(pair => {
+    const [key, value] = pair.split('=');
+    previousTotal[key] = parseFloat(value);  
+  });
+  return previousTotal;
+}
+
+
 function getCurrentSchoolYear(monthInt, yearInt){
   if (monthInt >= 7) {
     return (yearInt + '/' + (yearInt + 1));
@@ -176,3 +191,11 @@ function getTotalAbsence(sortedAbsences, totalAbsence){
     return totalAbsence;
 }
 
+
+function setTotalAbsence(totalAbsence, spreadsheet){
+  Logger.log(spreadsheet);
+  let sheet = spreadsheet.getSheetByName('Sammanställning');
+  Logger.log(sheet);
+
+  sheet.getRange(CONFIG.absenceTotalCell).setValue(totalAbsence);
+}
