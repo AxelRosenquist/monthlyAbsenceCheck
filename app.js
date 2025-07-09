@@ -16,7 +16,7 @@ function monthlyAbsenceCheck() {
   todaysMails.forEach(mail => {
     const allAbsences = getAbsence(mail);
     const allSortedAbsences = sortByClass(allAbsences);
-    const allSortedFilteredAbsences = allSortedAbsences.filter(entry => entry.absence >= 15.0);
+    const highAbsenceStudents = allSortedAbsences.filter(entry => entry.absence >= 15.0);
     
     let school = allSortedAbsences[0].year[0];
     if (school == "y" || school == "Y") {
@@ -45,11 +45,11 @@ function monthlyAbsenceCheck() {
     }
     let testMonth = month + 2
     if (CONFIG.sheetOrder.includes(testMonth)){
-      createMonthsTable(testMonth, spreadsheet, allSortedFilteredAbsences);
+      createMonthsTable(testMonth, spreadsheet, highAbsenceStudents);
     }
 
     const previousTotalAbsence = getPreviousTotal(spreadsheet);
-    let totalAbsence = getTotalAbsence(allSortedFilteredAbsences, previousTotalAbsence);
+    let totalAbsence = getTotalAbsence(highAbsenceStudents, previousTotalAbsence);
 
     setTotalAbsence(totalAbsence ,spreadsheet);
   });
