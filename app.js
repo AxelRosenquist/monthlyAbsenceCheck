@@ -113,7 +113,7 @@ function getPreviousTotal(spreadsheet){
   let sheet = spreadsheet.getSheetByName('Sammanställning');
   const rawPreviousTotal = sheet.getRange(CONFIG.absenceTotalCell).getValue();
   if (!rawPreviousTotal) return {};
-  const cleanedPreviousTotal = rawPreviousTotal.replace(/^{|}$/g, '')
+  const cleanedPreviousTotal = rawPreviousTotal.replace(/^{|}$/g, '');
   let previousTotal = {};
 
   const entries = cleanedPreviousTotal.split(/},\s*/); 
@@ -242,7 +242,7 @@ function getTotalAbsence(sortedAbsences, totalAbsence, month){
   sortedAbsences.forEach(pupil =>{
     if (pupil.name in totalAbsence){
       totalAbsence[pupil.name]['total'] = totalAbsence[pupil.name]['total'] + 1;
-      totalAbsence[pupil.name]['lastAbcense'] = CONFIG.months[month]
+      totalAbsence[pupil.name]['lastAbcense'] = CONFIG.months[month];
     } else {
       totalAbsence[pupil.name] = {'year': pupil.year, 'lastAbcense': CONFIG.months[month], 'total': 1};
     };
