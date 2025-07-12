@@ -31,7 +31,6 @@ function monthlyAbsenceCheck() {
     const schoolYear = getCurrentSchoolYear(month, year);
 
     const fileName = 'Frånvaro-' + school + '-' + schoolYear;
-    const currentMonth = CONFIG.months[month];
     const files = DriveApp.getFilesByName(fileName);
     let spreadsheet;
 
@@ -46,11 +45,9 @@ function monthlyAbsenceCheck() {
     }
     let testMonth = month + 2;
     if (CONFIG.sheetOrder.includes(testMonth)){
-      
       const previousTotalAbsence = getPreviousTotal(spreadsheet);
-      let totalAbsence = getTotalAbsence(highAbsenceStudents, previousTotalAbsence);
-
-      setTotalAbsence(totalAbsence ,spreadsheet);
+      let totalAbsence = getTotalAbsence(highAbsenceStudents, previousTotalAbsence, testMonth);
+      setTotalAbsence(totalAbsence, spreadsheet);
       createMonthsTableHeader(testMonth, spreadsheet);
       createMonthsTable(testMonth, spreadsheet, highAbsenceStudents, totalAbsence);
     }
@@ -116,15 +113,28 @@ function getPreviousTotal(spreadsheet){
   let sheet = spreadsheet.getSheetByName('Sammanställning');
   const rawPreviousTotal = sheet.getRange(CONFIG.absenceTotalCell).getValue();
   if (!rawPreviousTotal) return {};
-  const cleanedPreviousTotal = rawPreviousTotal.replace(/[{}]/g, '');
-  const listPreviousTotal = cleanedPreviousTotal.split(', ');
+  const cleanedPreviousTotal = rawPreviousTotal.replace(/^{|}$/g, '')
   let previousTotal = {};
 
-  listPreviousTotal.forEach(pair => {
-    const [key, value] = pair.split('=');
-    previousTotal[key] = parseFloat(value);  
+  const entries = cleanedPreviousTotal.split(/},\s*/); 
+  entries.forEach(entry => {
+    const [name, dataStr] = entry.split("={");
+
+    const dataPairs = dataStr.replace(/}$/, "").split(", ");
+    const dataObj = {};
+
+    dataPairs.forEach(pair => {
+      let [key, value] = pair.split("=");
+      if (key == 'total'){
+        value = parseInt(value);
+      } 
+      dataObj[key.trim()] = value;
+    });
+
+    previousTotal[name.trim()] = dataObj;
   });
-    return previousTotal;
+  Logger.log(previousTotal);
+  return previousTotal;
 }
 
 
@@ -190,6 +200,7 @@ function createMonthsTableHeader(month, spreadsheet){
 
 }
 
+
 function createSummaryTableHeader(spreadsheet){
   let sheet = spreadsheet.getSheetByName('Sammanställning');
   const row = 7;
@@ -200,6 +211,7 @@ function createSummaryTableHeader(spreadsheet){
     .setBorder(true, true, true, true, true, true)      
     .setFontWeight('bold');
 }
+
 
 function createMonthsTable(month, spreadsheet, absences, totalAbsence){
   let data = absences.map(person => [person.name, person.year, person.absence]);
@@ -214,11 +226,9 @@ function createMonthsTable(month, spreadsheet, absences, totalAbsence){
   }
 
   let cellValue = sheet.getRange('A' + row).getValue();
-
   while (cellValue != ''){
-    Logger.log(cellValue);
-    if (totalAbsence[cellValue] < 10) {
-      sheet.getRange('A' + row + ':E' + row).setBackground(CONFIG.absenceColors[totalAbsence[cellValue]]);
+    if (totalAbsence[cellValue]['total'] < 10) {
+      sheet.getRange('A' + row + ':E' + row).setBackground(CONFIG.absenceColors[totalAbsence[cellValue]['total']]);
     } else {
       sheet.getRange('A' + row + ':E' + row).setBackground(CONFIG.absenceColors[10]);
     }
@@ -228,15 +238,16 @@ function createMonthsTable(month, spreadsheet, absences, totalAbsence){
 }
 
 
-function getTotalAbsence(sortedAbsences, totalAbsence){
-    sortedAbsences.forEach(pupil =>{
-      if (pupil.name in totalAbsence){
-        totalAbsence[pupil.name] = totalAbsence[pupil.name] + 1;
-       } else {
-        totalAbsence[pupil.name] = 1;
-       };
-    });
-    return totalAbsence;
+function getTotalAbsence(sortedAbsences, totalAbsence, month){
+  sortedAbsences.forEach(pupil =>{
+    if (pupil.name in totalAbsence){
+      totalAbsence[pupil.name]['total'] = totalAbsence[pupil.name]['total'] + 1;
+      totalAbsence[pupil.name]['lastAbcense'] = CONFIG.months[month]
+    } else {
+      totalAbsence[pupil.name] = {'year': pupil.year, 'lastAbcense': CONFIG.months[month], 'total': 1};
+    };
+  });
+  return totalAbsence;
 }
 
 
