@@ -19,10 +19,10 @@ function monthlyAbsenceCheck() {
     const highAbsenceStudents = allSortedAbsences.filter(entry => entry.absence >= 15.0);
     
     let school = allSortedAbsences[0].year[0];
-    if (school == "y" || school == "Y") {
-      school = "Ydre";
+    if (school == 'y' || school == 'Y') {
+      school = 'Ydre';
     } else {
-      school = "Hestra";
+      school = 'Hestra';
     }
     
     const d = new Date();
@@ -43,13 +43,14 @@ function monthlyAbsenceCheck() {
       spreadsheet = SpreadsheetApp.open(file);
       Logger.log('File found');
     }
-    const previousTotalAbsence = getPreviousTotal(spreadsheet);
-    let totalAbsence = getTotalAbsence(highAbsenceStudents, previousTotalAbsence);
-
-    setTotalAbsence(totalAbsence ,spreadsheet);
-
     let testMonth = month + 2
     if (CONFIG.sheetOrder.includes(testMonth)){
+      
+      const previousTotalAbsence = getPreviousTotal(spreadsheet);
+      let totalAbsence = getTotalAbsence(highAbsenceStudents, previousTotalAbsence);
+
+      setTotalAbsence(totalAbsence ,spreadsheet);
+      createMonthsTableHeader(testMonth, spreadsheet);
       createMonthsTable(testMonth, spreadsheet, highAbsenceStudents, totalAbsence);
     }
   });
@@ -58,7 +59,7 @@ function monthlyAbsenceCheck() {
 
 function getTodaysMail(sender) {
   const today = new Date().toDateString();
-  const threads = GmailApp.search("from:" + sender);
+  const threads = GmailApp.search('from:' + sender);
   
   return threads
     .map(t => t.getMessages()[0])
@@ -114,7 +115,7 @@ function getPreviousTotal(spreadsheet){
   let sheet = spreadsheet.getSheetByName('Sammanställning');
   const rawPreviousTotal = sheet.getRange(CONFIG.absenceTotalCell).getValue();
   if (!rawPreviousTotal) return {};
-  const cleanedPreviousTotal = rawPreviousTotal.replace(/[{}]/g, "");
+  const cleanedPreviousTotal = rawPreviousTotal.replace(/[{}]/g, '');
   const listPreviousTotal = cleanedPreviousTotal.split(', ');
   let previousTotal = {};
 
@@ -146,9 +147,9 @@ function createSheet(fileName){
                         [6,7,8,9,'+10']];
 
   range.setValues(absenceScale)
-      .setFontWeight("bold") 
+      .setFontWeight('bold') 
       .setBorder(true, true, true, true, true, true)
-      .setHorizontalAlignment("center")
+      .setHorizontalAlignment('center')
       .setBackgrounds(absenceScaleColors);
 
   for (let col = 1; col <= 15; col++) {
@@ -162,9 +163,9 @@ function createSheet(fileName){
     sheet = spreadsheet.getSheetByName(month);
     range = sheet.getRange(CONFIG.scaleRange);
     range.setValues(absenceScale)
-      .setFontWeight("bold") 
+      .setFontWeight('bold') 
       .setBorder(true, true, true, true, true, true)
-      .setHorizontalAlignment("center")
+      .setHorizontalAlignment('center')
       .setBackgrounds(absenceScaleColors);
 
     for (let col = 1; col <= 15; col++) {
@@ -175,6 +176,19 @@ function createSheet(fileName){
 }
 
 
+function createMonthsTableHeader(month, spreadsheet){
+ let sheet = spreadsheet.getSheetByName(CONFIG.months[month]);
+  const row = 7;
+  const startCol = 1;
+  const titles = ['Namn', 'Klass', 'Fårnvaro', 'Orsak','Risk'];
+  sheet.getRange(row, startCol, 1, titles.length)
+    .setValues([titles])
+    .setBorder(true, true, true, true, true, true)      
+    .setFontWeight('bold');
+
+}
+
+
 function createMonthsTable(month, spreadsheet, absences, totalAbsence){
   let data = absences.map(person => [person.name, person.year, person.absence]);
   let sheet = spreadsheet.getSheetByName(CONFIG.months[month]);
@@ -182,17 +196,18 @@ function createMonthsTable(month, spreadsheet, absences, totalAbsence){
   const startCol = 1;
 
   sheet.getRange(row, startCol, data.length, data[0].length).setValues(data);
+  
   for (let col = 1; col <= 15; col++) {
     sheet.setColumnWidth(col, 150);
   }
 
-  let cellValue = sheet.getRange("A" + row).getValue();
+  let cellValue = sheet.getRange('A' + row).getValue();
 
-  while (cellValue != ""){
+  while (cellValue != ''){
     Logger.log(cellValue);
     sheet.getRange('A' + row + ':E' + row).setBackground(CONFIG.absenceColors[totalAbsence[cellValue]]);
     row++;
-    cellValue = sheet.getRange("A" + row).getValue();
+    cellValue = sheet.getRange('A' + row).getValue();
   }
 }
 
