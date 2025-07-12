@@ -37,13 +37,14 @@ function monthlyAbsenceCheck() {
 
     if (!files.hasNext()){
       spreadsheet = createSheet(fileName);
+      createSummaryTableHeader(spreadsheet);
       Logger.log('File created for instance ' + school);
     } else {
       const file = files.next();
       spreadsheet = SpreadsheetApp.open(file);
       Logger.log('File found');
     }
-    let testMonth = month;
+    let testMonth = month + 2;
     if (CONFIG.sheetOrder.includes(testMonth)){
       
       const previousTotalAbsence = getPreviousTotal(spreadsheet);
@@ -152,6 +153,7 @@ function createSheet(fileName){
       .setHorizontalAlignment('center')
       .setBackgrounds(absenceScaleColors);
 
+
   for (let col = 1; col <= 15; col++) {
       sheet.setColumnWidth(col, 150);
     }
@@ -177,7 +179,7 @@ function createSheet(fileName){
 
 
 function createMonthsTableHeader(month, spreadsheet){
- let sheet = spreadsheet.getSheetByName(CONFIG.months[month]);
+  let sheet = spreadsheet.getSheetByName(CONFIG.months[month]);
   const row = 7;
   const startCol = 1;
   const titles = ['Namn', 'Klass', 'Fårnvaro', 'Orsak','Risk'];
@@ -186,6 +188,17 @@ function createMonthsTableHeader(month, spreadsheet){
     .setBorder(true, true, true, true, true, true)      
     .setFontWeight('bold');
 
+}
+
+function createSummaryTableHeader(spreadsheet){
+  let sheet = spreadsheet.getSheetByName('Sammanställning');
+  const row = 7;
+  const startCol = 1;
+  const titles = ['Namn', 'Klass', 'Senast över 15%', 'Kommentar','Risk'];
+  sheet.getRange(row, startCol, 1, titles.length)
+    .setValues([titles])
+    .setBorder(true, true, true, true, true, true)      
+    .setFontWeight('bold');
 }
 
 function createMonthsTable(month, spreadsheet, absences, totalAbsence){
