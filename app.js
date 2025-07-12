@@ -3,7 +3,7 @@ import { EMAIL } from "./mail";
 const CONFIG = {
   emailSender: EMAIL,
   months: {8:'Aug', 9:'Sep', 10:'Okt', 11:'Nov', 0:'Dec', 1:'Jan', 2:'Feb', 3:'Mar', 4:'Apr', 5:'Maj', 6:'Jun',},
-  sheetOrder: [8,9,10,11,0,1,2,3,4,6],
+  sheetOrder: [8,9,10,11,0,1,2,3,4,5,6],
   scaleRange: 'A2:E3',
   absenceColors: {1:'#a4c2f4',2:'#3c78d8',3:'#b6d7a8',4:'#6aa84f',5:'#fff2cc',6:'#ffff00',7:'#f6b26b',8:'#ff9900',9:'#ff0000',10:'#990000'},
   absenceTotalCell: 'V1',
@@ -43,7 +43,7 @@ function monthlyAbsenceCheck() {
       spreadsheet = SpreadsheetApp.open(file);
       Logger.log('File found');
     }
-    let testMonth = month + 2
+    let testMonth = month;
     if (CONFIG.sheetOrder.includes(testMonth)){
       
       const previousTotalAbsence = getPreviousTotal(spreadsheet);
@@ -188,7 +188,6 @@ function createMonthsTableHeader(month, spreadsheet){
 
 }
 
-
 function createMonthsTable(month, spreadsheet, absences, totalAbsence){
   let data = absences.map(person => [person.name, person.year, person.absence]);
   let sheet = spreadsheet.getSheetByName(CONFIG.months[month]);
@@ -205,7 +204,11 @@ function createMonthsTable(month, spreadsheet, absences, totalAbsence){
 
   while (cellValue != ''){
     Logger.log(cellValue);
-    sheet.getRange('A' + row + ':E' + row).setBackground(CONFIG.absenceColors[totalAbsence[cellValue]]);
+    if (totalAbsence[cellValue] < 10) {
+      sheet.getRange('A' + row + ':E' + row).setBackground(CONFIG.absenceColors[totalAbsence[cellValue]]);
+    } else {
+      sheet.getRange('A' + row + ':E' + row).setBackground(CONFIG.absenceColors[10]);
+    }
     row++;
     cellValue = sheet.getRange('A' + row).getValue();
   }
