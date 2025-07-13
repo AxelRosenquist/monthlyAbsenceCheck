@@ -50,7 +50,10 @@ function monthlyAbsenceCheck() {
       setTotalAbsence(totalAbsence, spreadsheet);
       createMonthsTableHeader(testMonth, spreadsheet);
       createMonthsTable(testMonth, spreadsheet, highAbsenceStudents, totalAbsence);
+
+      updateSummary(spreadsheet, totalAbsence);
     }
+    Logger.log('Finished operations for: ' + school);
   });
 }
 
@@ -89,22 +92,21 @@ function getAbsence(message){
 function sortByClass(absences){
   let newAbsence = [];
   absences.sort((a, b) => {
-    const isALetter = /^[A-Za-z]/.test(a.year);
-    const isBLetter = /^[A-Za-z]/.test(b.year);
+  const onlyLetters = /^[A-Za-z]+$/;
+    const aIsOnlyLetters = onlyLetters.test(a.year);
+    const bIsOnlyLetters = onlyLetters.test(b.year);
 
-    if (isALetter && !isBLetter) return -1;
-    if (!isALetter && isBLetter) return 1;
+    if (aIsOnlyLetters && !bIsOnlyLetters) return -1;
+    if (!aIsOnlyLetters && bIsOnlyLetters) return 1;
 
-    if (a.year < b.year) return -1;
-    if (a.year > b.year) return 1;
-    return 0;
-    });
+    return a.year.localeCompare(b.year);
+  });
 
-    absences.forEach(obj => {
-      if (!/[4-9]/.test(obj.year[1])) {
-        newAbsence.push(obj);
-      }
-    });
+  absences.forEach(obj => {
+    if (!/[4-9]/.test(obj.year[1])) {
+    newAbsence.push(obj);
+    }
+  });
   return newAbsence;
 }
 
@@ -133,7 +135,6 @@ function getPreviousTotal(spreadsheet){
 
     previousTotal[name.trim()] = dataObj;
   });
-  Logger.log(previousTotal);
   return previousTotal;
 }
 
@@ -205,7 +206,7 @@ function createSummaryTableHeader(spreadsheet){
   let sheet = spreadsheet.getSheetByName('Sammanställning');
   const row = 7;
   const startCol = 1;
-  const titles = ['Namn', 'Klass', 'Senast över 15%', 'Kommentar','Risk'];
+  const titles = ['Namn', 'Klass', 'Senast över 15%'];
   sheet.getRange(row, startCol, 1, titles.length)
     .setValues([titles])
     .setBorder(true, true, true, true, true, true)      
@@ -254,4 +255,42 @@ function getTotalAbsence(sortedAbsences, totalAbsence, month){
 function setTotalAbsence(totalAbsence, spreadsheet){
   let sheet = spreadsheet.getSheetByName('Sammanställning');
   sheet.getRange(CONFIG.absenceTotalCell).setValue(totalAbsence);
+}
+
+
+function updateSummary(spreadsheet, totalAbsence){
+  let keys = Object.keys(totalAbsence);
+  let data = [];
+  keys.forEach(pupil => {
+    data.push([pupil, totalAbsence[pupil]['year'], totalAbsence[pupil]['lastAbcense']]);
+  });
+
+  data.sort((a, b) => {
+  const onlyLetters = /^[A-Za-z]+$/;
+
+  const aIsOnlyLetters = onlyLetters.test(a[1]);
+  const bIsOnlyLetters = onlyLetters.test(b[1]);
+
+  if (aIsOnlyLetters && !bIsOnlyLetters) return -1;
+  if (!aIsOnlyLetters && bIsOnlyLetters) return 1;
+
+  return a[1].localeCompare(b[1]);
+  });
+  
+  let sheet = spreadsheet.getSheetByName('Sammanställning');
+  let row = 8;
+  const startCol = 1;
+
+  sheet.getRange(row, startCol, data.length, data[0].length).setValues(data);
+
+  let cellValue = sheet.getRange('A' + row).getValue();
+  while (cellValue != ''){
+    if (totalAbsence[cellValue]['total'] < 10) {
+      sheet.getRange('A' + row + ':C' + row).setBackground(CONFIG.absenceColors[totalAbsence[cellValue]['total']]);
+    } else {
+      sheet.getRange('A' + row + ':C' + row).setBackground(CONFIG.absenceColors[10]);
+    }
+    row++;
+    cellValue = sheet.getRange('A' + row).getValue();
+  }
 }
