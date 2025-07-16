@@ -43,13 +43,12 @@ function monthlyAbsenceCheck() {
       spreadsheet = SpreadsheetApp.open(file);
       Logger.log('File found');
     }
-    let testMonth = month + 2;
-    if (CONFIG.sheetOrder.includes(testMonth)){
+    if (CONFIG.sheetOrder.includes(month)){
       const previousTotalAbsence = getPreviousTotal(spreadsheet);
-      let totalAbsence = getTotalAbsence(highAbsenceStudents, previousTotalAbsence, testMonth);
+      let totalAbsence = getTotalAbsence(highAbsenceStudents, previousTotalAbsence, month);
       setTotalAbsence(totalAbsence, spreadsheet);
-      createMonthsTableHeader(testMonth, spreadsheet);
-      createMonthsTable(testMonth, spreadsheet, highAbsenceStudents, totalAbsence);
+      createMonthsTableHeader(month, spreadsheet);
+      createMonthsTable(month, spreadsheet, highAbsenceStudents, totalAbsence);
 
       updateSummary(spreadsheet, totalAbsence);
     }
@@ -128,7 +127,7 @@ function getPreviousTotal(spreadsheet){
     dataPairs.forEach(pair => {
       let [key, value] = pair.split("=");
       if (key == 'total'){
-        value = parseInt(value);
+        value = parseFloat(value);
       } 
       dataObj[key.trim()] = value;
     });
