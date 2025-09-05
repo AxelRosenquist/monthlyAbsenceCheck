@@ -1,5 +1,6 @@
 import { EMAIL } from "./mail";
 
+
 const CONFIG = {
   emailSender: EMAIL,
   mailSubject: 'Frånvarobevakning - Frånvaro över x%',
@@ -16,12 +17,13 @@ const CONFIG = {
 
 function monthlyAbsenceCheck() {
   const latestMail = getLatestMail(CONFIG.emailSender);
-
-
+  if (latestMail.length < 1){
+    return
+  }
   const allAbsences = getAbsence(latestMail);
   const allSortedAbsences = sortByClass(allAbsences);
   const highAbsenceStudents = allSortedAbsences.filter(entry => entry.absence >= 15.0);
- 
+
   highAbsenceStudents.forEach(student => 
   {if (student.year[0].toLowerCase()=== "y"){
     CONFIG.ydreAbcense.push(student);
@@ -38,7 +40,7 @@ function monthlyAbsenceCheck() {
     }
 
     const d = new Date();
-    const month = d.getMonth() ;
+    const month = d.getMonth();
     const year = d.getFullYear();
     const schoolYear = getCurrentSchoolYear(month, year);
 
@@ -70,17 +72,23 @@ function monthlyAbsenceCheck() {
 
 
 function getLatestMail(sender) {
+  const d = new Date();
+  const month = d.getMonth();
   const threads = GmailApp.search('from:' + sender);
-  onSubjectThreads = threads.filter(s => s.getFirstMessageSubject() === CONFIG.mailSubject)
-
-  return onSubjectThreads[0].getMessages()[0]
+  const onSubjectThreads = threads.filter(s => s.getFirstMessageSubject() === CONFIG.mailSubject);
+  const latestMailDate = onSubjectThreads[0].getLastMessageDate().getMonth();
+  if (latestMailDate === month){
+    return onSubjectThreads[0].getMessages()[0];
+  } else {
+    return [];
+  }
 }
 
 function getAbsence(message){
   const content = message.getPlainBody();
-  const lines = content.split('\n');
+  const cleanMessage = content.replace(/\\n/g, '\n');
+  const lines = cleanMessage.split('\n');
   const results = [];
-
   for (let line of lines) {
 
     const values = line.split(',').map(v => v.trim());
@@ -308,9 +316,6 @@ function updateSummary(spreadsheet, totalAbsence){
     cellValue = sheet.getRange('A' + row).getValue();
   }
 }
-
-
-
 
 
 
