@@ -2,31 +2,43 @@ import { EMAIL } from "./mail";
 
 const CONFIG = {
   emailSender: EMAIL,
+  mailSubject: 'Frånvarobevakning - Frånvaro över x%',
   months: {8:'Aug', 9:'Sep', 10:'Okt', 11:'Nov', 0:'Dec', 1:'Jan', 2:'Feb', 3:'Mar', 4:'Apr', 5:'Maj', 6:'Jun',},
   sheetOrder: [8,9,10,11,0,1,2,3,4,5,6],
   scaleRange: 'A2:E3',
   absenceColors: {1:'#a4c2f4',2:'#3c78d8',3:'#b6d7a8',4:'#6aa84f',5:'#fff2cc',6:'#ffff00',7:'#f6b26b',8:'#ff9900',9:'#ff0000',10:'#990000'},
   absenceTotalCell: 'V1',
+  schools: ["Ydre", "Hestra"],
+  ydreAbcense: [],
+  hestraAbcense: [],
 }
 
 
 function monthlyAbsenceCheck() {
-  const todaysMails = getTodaysMail(CONFIG.emailSender);
+  const latestMail = getLatestMail(CONFIG.emailSender);
 
-  todaysMails.forEach(mail => {
-    const allAbsences = getAbsence(mail);
-    const allSortedAbsences = sortByClass(allAbsences);
-    const highAbsenceStudents = allSortedAbsences.filter(entry => entry.absence >= 15.0);
-    
-    let school = allSortedAbsences[0].year[0];
-    if (school == 'y' || school == 'Y') {
-      school = 'Ydre';
+
+  const allAbsences = getAbsence(latestMail);
+  const allSortedAbsences = sortByClass(allAbsences);
+  const highAbsenceStudents = allSortedAbsences.filter(entry => entry.absence >= 15.0);
+ 
+  highAbsenceStudents.forEach(student => 
+  {if (student.year[0].toLowerCase()=== "y"){
+    CONFIG.ydreAbcense.push(student);
+  } else{
+    CONFIG.hestraAbcense.push(student);
+  }});
+
+  CONFIG.schools.forEach(school => {
+    let currentSchoolAbcense;
+    if (school === "Ydre"){
+      currentSchoolAbcense = CONFIG.ydreAbcense
     } else {
-      school = 'Hestra';
+      currentSchoolAbcense = CONFIG.hestraAbcense
     }
-    
+
     const d = new Date();
-    const month = d.getMonth();
+    const month = d.getMonth() ;
     const year = d.getFullYear();
     const schoolYear = getCurrentSchoolYear(month, year);
 
@@ -45,10 +57,10 @@ function monthlyAbsenceCheck() {
     }
     if (CONFIG.sheetOrder.includes(month)){
       const previousTotalAbsence = getPreviousTotal(spreadsheet);
-      let totalAbsence = getTotalAbsence(highAbsenceStudents, previousTotalAbsence, month);
+      let totalAbsence = getTotalAbsence(currentSchoolAbcense, previousTotalAbsence, month);
       setTotalAbsence(totalAbsence, spreadsheet);
       createMonthsTableHeader(month, spreadsheet);
-      createMonthsTable(month, spreadsheet, highAbsenceStudents, totalAbsence);
+      createMonthsTable(month, spreadsheet, currentSchoolAbcense, totalAbsence);
 
       updateSummary(spreadsheet, totalAbsence);
     }
@@ -57,15 +69,12 @@ function monthlyAbsenceCheck() {
 }
 
 
-function getTodaysMail(sender) {
-  const today = new Date().toDateString();
+function getLatestMail(sender) {
   const threads = GmailApp.search('from:' + sender);
-  
-  return threads
-    .map(t => t.getMessages()[0])
-    .filter(m => m.getDate().toDateString() === today);
-}
+  onSubjectThreads = threads.filter(s => s.getFirstMessageSubject() === CONFIG.mailSubject)
 
+  return onSubjectThreads[0].getMessages()[0]
+}
 
 function getAbsence(message){
   const content = message.getPlainBody();
@@ -101,11 +110,12 @@ function sortByClass(absences){
     return a.year.localeCompare(b.year);
   });
 
-  absences.forEach(obj => {
-    if (!/[4-9]/.test(obj.year[1])) {
-    newAbsence.push(obj);
+  absences.forEach(student => {
+    if (!/[4-9]/.test(student.year[1]) && student.year != '') {
+    newAbsence.push(student);
     }
   });
+
   return newAbsence;
 }
 
@@ -224,7 +234,6 @@ function createMonthsTable(month, spreadsheet, absences, totalAbsence){
   for (let col = 1; col <= 15; col++) {
     sheet.setColumnWidth(col, 150);
   }
-
   let cellValue = sheet.getRange('A' + row).getValue();
   while (cellValue != ''){
     if (totalAbsence[cellValue]['total'] < 10) {
@@ -232,6 +241,12 @@ function createMonthsTable(month, spreadsheet, absences, totalAbsence){
     } else {
       sheet.getRange('A' + row + ':E' + row).setBackground(CONFIG.absenceColors[10]);
     }
+    const absenceCell = sheet.getRange('C'+ row);
+    const cellAbsence = absenceCell.getValue();
+    if (cellAbsence >= 20.0){
+      absenceCell.setFontWeight('bold');
+    }
+
     row++;
     cellValue = sheet.getRange('A' + row).getValue();
   }
@@ -293,3 +308,31 @@ function updateSummary(spreadsheet, totalAbsence){
     cellValue = sheet.getRange('A' + row).getValue();
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
